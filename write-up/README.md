@@ -15,7 +15,7 @@ Please write me an e-mail if you have any remarks or you want to share more info
 1. [Introduction](#introduction)
 2. [Development Process](#development-process)
 3. [Network Architecture](#network-architecture)
-4. [Configurable Parameters](#configurable-parameters)
+4. [Hyperparameters](#Hyperparameters)
 5. [Object Detection With Custom Objects](#object-detection-with-custom-objects)
 
 **[Part 2: Collecting Data](#collecting-data)**
@@ -141,20 +141,8 @@ The category values are replaced by 1s and 0s depending on which column represen
   ```optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)```
 
 - **Hyperparameter configuration**: hyperparameters represent the configurable values used when building a neural network. Different hyperparameters are one reason why networks are different from each other and why some models represent better what we want.
-  Examples of these hyperparameters include learning rate, epochs, batch size and many more.
-  - **Epoch**: An epoch is a single forward and backward pass of the whole dataset. Increasing the number of epochs can increase the accuracy of the model without requiring more data.
-
-  - **Batch size**: Divides the data into batches and then uses these subsets of the dataset instead of all the data at one time for training. This provides the ability to train a model, even if a computer lacks the memory to store the entire dataset.
-    If the system has memory restrictions, batches have to be smaller to be able to run the model.
-
-  - **Learning rate**: Learning rate is a hyper-parameter that controls how much we are adjusting the weights of our network with respect the loss gradient.
-    If the learning rate is too low, learning never progresses, too high a learning rate causes instability and never converges. In between there is a band of “just right” learning rates that successfully train.
-    If the learning rate is increased too much, the final accuracy can be lower, and the model stops improving on an earlier epoch. Lowering the learning rate would require more epochs, but could ultimately achieve better accuracy.
-
-    The following formula shows the relationship: ```new_weight = existing_weight — learning_rate * gradient```
-
-  Finding the right hyper-parameters is crucial to training success, but it can be hard to find.
-  Guess parameters and observe the result. Based on that result tweak the parameters.
+  Examples of these hyperparameters include learning rate, epochs, batch size and many more. Finding the right hyper-parameters is crucial to training success, but it can be hard to find.
+  I describe more in detail how I selected Hyperparameters below under *"4. Hyperparameters related to training"*.
 
 **One Layer Neural Network using TensorFlow:   
 (Source: https://www.geeksforgeeks.org/softmax-regression-using-tensorflow/)**  
@@ -356,85 +344,62 @@ The development of a Convolutional Neural Network allowed me to understand and a
 
 ### 3. Network Architecture  
 
-A neural network is a series of layers, where the output of one layer becomes the input to another. 
-Setting the architecture of a neural network equals to setting number of layers and their sizes (number of nodes in each hidden layer).
-As we increase the size and number of layers in a Neural Network, the capacity of the network increases. 
-That is, the space of representable functions grows since the neurons can collaborate to express many different functions.
-But as the model can learn to classify more complicated data the risk to overfit the training data also grows.
-A model with less hidden neurons only has the representational power to classify the data in broad strokes. In practice, this could lead to better generalization on the test set.
-But even tough smaller neural networks can be preferred to prevent overfitting given that the data is not complex enough, there are many other better ways to prevent overfitting in Neural Networks than using a small neural network (such as L2 regularization or dropout).
-In practice, it is always better to use these methods to control overfitting instead of the number of neurons.
-My approach to build the neural network was to first build the smallest FCN network possible that runs nicely.
-The first network I built was composed of one encoder block, one 1x1 convolution and one decoder block.  
+Defining the architecture of a neural network equals to setting the Hyperparameters related to the network structure:
 
-Smallest functioning FCN network:
+- **Number of Layers**: As we increase the number of layers (and its size), the capacity of the neural network increases.   
+  Two aspects have to be considered when determining the number of layers:  
+  On the one hand, one can expect a model with higher capacity to be able to model more relationships between more variables than a model with a lower capacity.
+  But on the other hand, as the model can learn to classify more complicated data, the risk to overfit the training data also grows. In other words, a model with less layers only has power to classify the data in broad strokes and could lead to better generalization.  
+ 
+  The recommended practice is to implement model with more layers (higher capacity) and use techniques such as L2 regularization or dropout to prevent overfitting, instead of selecting a smaller capacity model (less layers).
+ 
+- **Dropout**: unfortunately the methods provided in the utils module of the project's original Github repo do not offer a straight-forward procedure for setting the `keep_probability` hyperparameter.
+  Because of this I had to select the previous smaller capacity model once I noticed that adding a new layer caused signs of overfitting. 
+ 
+- **Convolution Kernel**: in a convolutional layer the Kernel size influences the number of parameters in a model which, in turns, influences the networks capacity.
+  The *spatial dimensions of the input* in a 2D convolutional layer is determined by the height and width.
+  There are no rules with regards to what height and width use for the convolution kernel. The best best value to use depends largely on the nature of the data.
+  If one thinks that a big amount of pixels are necessary for the network recognize the object one will use large filters (as 11x11 or 9x9). 
+  But if one thinks that what differentiates objects are some small and local features, one should use small filters (3x3 or 5x5).
+  The *spatial size of the output* in a convolutional layer is determined by the stride, padding, and the depth.
+  Using a stride of 1 or 2 is a widely used practice, but again, there is no hard rule about which stride to use. 
+  One can set the filter depth to any value. However the more filters, the more image features can get extracted and the better the network becomes at recognizing patterns.
+  It is also recommended that each successive layer has two to four times the number of filters in the previous layer. This helps the network learn hierarchical features.
+  
+  In this project, to change the convolution kernel hyperparameters one has to adjust the filters and kernel_size inside the `separable_conv2d_batchnorm()` and `conv2d_batchnorm()` functions:   
 
-```python
-def fcn_model(inputs, num_classes):
+  ```
+  def separable_conv2d_batchnorm(input_layer, filters, strides=1):
+      output_layer = SeparableConv2DKeras(filters=filters,kernel_size=3, strides=strides, padding='same', activation='relu')(input_layer)
     
-    print("Input size: ", inputs.get_shape().as_list())
-    
-    # Encoder Blocks
-    enc_layer_1 = encoder_block(inputs, filters=32, strides=2)
-    print("enc_layer_1 size:\t", enc_layer_1.get_shape().as_list())
-      
-    # 1x1 Convolution layer using conv2d_batchnorm().
-    layer_1x1 = conv2d_batchnorm(enc_layer_1, filters=64, kernel_size=1, strides=1)
-    print("layer_1x1 size:\t", layer_1x1.get_shape().as_list())
-    
-    # Decoder Blocks
-    dec_layer_1 = decoder_block(layer_1x1, inputs, filters=32) # [upsampled_layer, large_input_layer]
-    print("dec_layer_1 size:\t", dec_layer_1.get_shape().as_list())
-      
-    # The function returns the output layer of your model. "dec_layer_1" is the final layer obtained from the last decoder_block()
-    return layers.Conv2D(num_classes, 3, activation='softmax', padding='same')(dec_layer_1)
-```
-One of the main difficulties I faced was to pass in the right arguments to the decoder block function. It was not immediately obvious to me how to match a "upsampled layer" with a corresponding "large input layer" to perform the decoding.
-Having a small functioning FCN, I added step by step more layers with it's corresponding methods to prevent overfitting.
-With each additional encoder block that I added, I had to define the number of filters to add. I decided to follow the common approach to double the number of channels from one layer to the next.
-Then via systematic experimentation I tried to determine how many encoder/decoder blocks I needed to so that the model works best for my specific task and dataset.  
+      output_layer = layers.BatchNormalization()(output_layer) 
+      return output_layer
 
-The final neural network design I arrived at included three encoder blocks, followed by one 1x1 convolution and three decoder blocks:
-
-```python
-def fcn_model(inputs, num_classes):
+  def conv2d_batchnorm(input_layer, filters, kernel_size=3, strides=1):
+      output_layer = layers.Conv2D(filters=filters, kernel_size=kernel_size, strides=strides, padding='same', activation='relu')(input_layer)
     
-    print("Input size: ", inputs.get_shape().as_list())
-    
-    # Encoder Blocks. 
-    enc_layer_1 = encoder_block(inputs, filters=32, strides=2)
-    print("enc_layer_1 size:\t", enc_layer_1.get_shape().as_list())
-    
-    enc_layer_2 = encoder_block(enc_layer_1, filters=64, strides=2) # to match concatenate
-    print("enc_layer_2 size:\t", enc_layer_2.get_shape().as_list())
-    
-    enc_layer_3 = encoder_block(enc_layer_2, filters=128, strides=2) # to match concatenate
-    print("enc_layer_3 size:\t", enc_layer_3.get_shape().as_list())
-    
-    # 1x1 Convolution layer using conv2d_batchnorm().
-    layer_1x1 = conv2d_batchnorm(enc_layer_3, filters=256, kernel_size=1, strides=1)
-    print("layer_1x1 size:\t", layer_1x1.get_shape().as_list())
-    
-    # Decoder Blocks
-    dec_layer_1 = decoder_block(layer_1x1, enc_layer_2, filters=128) # [upsampled_layer, large_input_layer]
-    print("dec_layer_1 size:\t", dec_layer_1.get_shape().as_list())
-    
-    dec_layer_2 = decoder_block(dec_layer_1, enc_layer_1, filters=64) # [upsampled_layer, large_input_layer]
-    print("dec_layer_2 size:\t", dec_layer_2.get_shape().as_list())
-    
-    dec_layer_3 = decoder_block(dec_layer_2, inputs, filters=32)
-    print("dec_layer_3 size:\t", dec_layer_3.get_shape().as_list())
-    
-    # The function returns the output layer of the model
-    return layers.Conv2D(num_classes, 3, activation='softmax', padding='same')(dec_layer_3)
-```
+      output_layer = layers.BatchNormalization()(output_layer) 
+      return output_layer
+  ```	
 	
+**Implementation**  
+My first approach was to build the smallest possible FCN, composed of one encoder block, one 1x1 convolution and one decoder block.
+I selected a small filter (3x3) since smaller filters (3x3 or 5x5) usually perform better than larger filters.
+To test different architectures I progressively added more encoder/decoder layers and observed the result in accuracy.
+When doing so, I found it challenging to find out, how to pass in the right arguments to the decoder block function in order for the concatenation process to work.
+It was not immediately obvious to me, how to, given a "upsampled layer", find the corresponding "large input layer" to perform the decoding.
+Because the concatenation process requires inputs with matching shapes I added to each tensor a code line to print its shape.  
 
-<a name="configurable-parameters"/>  
+Each time I added a layer to test a model that is one layer deeper, I doubled the number of filters in the new layer. I did so because it is a widely used practice.  
 
-### 4. Configurable Parameters  
+In order to be able to benchmark the different architectures I decided to fix the learning rate at an arbitrary value of 0.01.
+I also fixed the number of epochs to an arbitrary value of 15 (to spare the limited computational resources available (GPU time)).
 
+Please refer to the Performance Results section of this document for details on how well each of the tested FCN models produced predictions.
 
+<a name="Hyperparameters"/>  
+
+### 4. Hyperparameters related to training
 
 <a name="object-detection-with-custom-objects"/>  
 
@@ -508,3 +473,4 @@ References:
 - https://www.mabl.com/blog/image-classification-with-tensorflow
 - https://iamaaditya.github.io/2016/03/one-by-one-convolution/
 - http://cs231n.github.io/neural-networks-1/
+- https://towardsdatascience.com/estimating-optimal-learning-rate-for-a-deep-neural-network-ce32f2556ce0
