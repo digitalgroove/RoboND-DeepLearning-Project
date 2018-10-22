@@ -318,7 +318,9 @@ Finally, I will combine the above two and create the model. In this step I will 
 **Image 8: A simple representation of a Fully Convolutional Network (FCN)**
 
 The development of a Convolutional Neural Network allowed me to understand and apply following techniques:
-- **Conversion of fully connected to 1x1 convolutional layers**: in traditional CNN's the output of a convolutional layer is fed into a fully connected layer, and for that the array is flatten it into a monodimensional tensor (a vector). This results in the loss of spatial information, because no information about the location (2D arrangement) of the pixels is preserved. If we use a 1x1 convolutional layer instead the output tensor will preserve it dimensions and spacial information will be preserved.
+- **Conversion of fully connected to 1x1 convolutional layers**: in traditional CNN's the output of a convolutional layer is fed into a fully connected layer, and for that the array is flatten into a monodimensional tensor (a vector).
+  This results in the loss of spatial information, because no information about the location (2D arrangement) of the pixels is preserved. 
+  If we use a 1x1 convolutional layer instead the output tensor will preserve it dimensions and the spacial information will be preserved.
 - **Upsampling**: We already saw that in Convolutional Neural Networks the intermediate layers typically get smaller and smaller (although often deeper). In order to produce full a image segmentation, that matches the width and height of the original input image we need to upsample the intermediate tensors. 
   Through the use of transposed convolutional layers (a.k.a. “deconvolutions”) we can associate a single input activation with multiple outputs.  
   In TensorFlow, the API `tf.layers.conv2d_transpose` is used to create a transposed convolutional layer.  
@@ -350,14 +352,89 @@ The development of a Convolutional Neural Network allowed me to understand and a
   output = layers.BatchNormalization()(input)
   ```
 
-
 <a name="network-architecture"/>  
 
 ### 3. Network Architecture  
 
+A neural network is a series of layers, where the output of one layer becomes the input to another. 
+Setting the architecture of a neural network equals to setting number of layers and their sizes (number of nodes in each hidden layer).
+As we increase the size and number of layers in a Neural Network, the capacity of the network increases. 
+That is, the space of representable functions grows since the neurons can collaborate to express many different functions.
+But as the model can learn to classify more complicated data the risk to overfit the training data also grows.
+A model with less hidden neurons only has the representational power to classify the data in broad strokes. In practice, this could lead to better generalization on the test set.
+But even tough smaller neural networks can be preferred to prevent overfitting given that the data is not complex enough, there are many other better ways to prevent overfitting in Neural Networks than using a small neural network (such as L2 regularization or dropout).
+In practice, it is always better to use these methods to control overfitting instead of the number of neurons.
+My approach to build the neural network was to first build the smallest FCN network possible that runs nicely.
+The first network I built was composed of one encoder block, one 1x1 convolution and one decoder block.  
+
+Smallest functioning FCN network:
+
+```python
+def fcn_model(inputs, num_classes):
+    
+    print("Input size: ", inputs.get_shape().as_list())
+    
+    # Encoder Blocks
+    enc_layer_1 = encoder_block(inputs, filters=32, strides=2)
+    print("enc_layer_1 size:\t", enc_layer_1.get_shape().as_list())
+      
+    # 1x1 Convolution layer using conv2d_batchnorm().
+    layer_1x1 = conv2d_batchnorm(enc_layer_1, filters=64, kernel_size=1, strides=1)
+    print("layer_1x1 size:\t", layer_1x1.get_shape().as_list())
+    
+    # Decoder Blocks
+    dec_layer_1 = decoder_block(layer_1x1, inputs, filters=32) # [upsampled_layer, large_input_layer]
+    print("dec_layer_1 size:\t", dec_layer_1.get_shape().as_list())
+      
+    # The function returns the output layer of your model. "dec_layer_1" is the final layer obtained from the last decoder_block()
+    return layers.Conv2D(num_classes, 3, activation='softmax', padding='same')(dec_layer_1)
+```
+One of the main difficulties I faced was to pass in the right arguments to the decoder block function. It was not immediately obvious to me how to match a "upsampled layer" with a corresponding "large input layer" to perform the decoding.
+Having a small functioning FCN, I added step by step more layers with it's corresponding methods to prevent overfitting.
+With each additional encoder block that I added, I had to define the number of filters to add. I decided to follow the common approach to double the number of channels from one layer to the next.
+Then via systematic experimentation I tried to determine how many encoder/decoder blocks I needed to so that the model works best for my specific task and dataset.  
+
+The final neural network design I arrived at included three encoder blocks, followed by one 1x1 convolution and three decoder blocks:
+
+```python
+def fcn_model(inputs, num_classes):
+    
+    print("Input size: ", inputs.get_shape().as_list())
+    
+    # Encoder Blocks. 
+    enc_layer_1 = encoder_block(inputs, filters=32, strides=2)
+    print("enc_layer_1 size:\t", enc_layer_1.get_shape().as_list())
+    
+    enc_layer_2 = encoder_block(enc_layer_1, filters=64, strides=2) # to match concatenate
+    print("enc_layer_2 size:\t", enc_layer_2.get_shape().as_list())
+    
+    enc_layer_3 = encoder_block(enc_layer_2, filters=128, strides=2) # to match concatenate
+    print("enc_layer_3 size:\t", enc_layer_3.get_shape().as_list())
+    
+    # 1x1 Convolution layer using conv2d_batchnorm().
+    layer_1x1 = conv2d_batchnorm(enc_layer_3, filters=256, kernel_size=1, strides=1)
+    print("layer_1x1 size:\t", layer_1x1.get_shape().as_list())
+    
+    # Decoder Blocks
+    dec_layer_1 = decoder_block(layer_1x1, enc_layer_2, filters=128) # [upsampled_layer, large_input_layer]
+    print("dec_layer_1 size:\t", dec_layer_1.get_shape().as_list())
+    
+    dec_layer_2 = decoder_block(dec_layer_1, enc_layer_1, filters=64) # [upsampled_layer, large_input_layer]
+    print("dec_layer_2 size:\t", dec_layer_2.get_shape().as_list())
+    
+    dec_layer_3 = decoder_block(dec_layer_2, inputs, filters=32)
+    print("dec_layer_3 size:\t", dec_layer_3.get_shape().as_list())
+    
+    # The function returns the output layer of the model
+    return layers.Conv2D(num_classes, 3, activation='softmax', padding='same')(dec_layer_3)
+```
+	
+
 <a name="configurable-parameters"/>  
 
 ### 4. Configurable Parameters  
+
+
 
 <a name="object-detection-with-custom-objects"/>  
 
@@ -430,3 +507,4 @@ References:
 - https://www.tensorflow.org/tutorials/keras/overfit_and_underfit
 - https://www.mabl.com/blog/image-classification-with-tensorflow
 - https://iamaaditya.github.io/2016/03/one-by-one-convolution/
+- http://cs231n.github.io/neural-networks-1/
