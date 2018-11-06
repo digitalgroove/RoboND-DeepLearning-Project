@@ -401,6 +401,61 @@ Please refer to the Performance Results section of this document for details on 
 
 ### 4. Hyperparameters related to training
 
+Hyperparameters related to the network structure were already described by me above under section "1.3 Network Architecture".
+In this section I will describe how I determined the hyperparameters related to training such as learning rate, batch size, etc..
+Finding the right hyper-parameter values is crucial to get a good performance, next I explain how I proceeded.
+
+First I determined what batch size value I will use on my tests:
+
+- **Batch size**: Divides the data into batches and then uses these subsets of the dataset instead of all the data at one time for training. 
+  This provides the ability to train a model, even if a computer lacks the memory to store the entire dataset.
+  Larger batch size means more "accurate" gradients, in the sense of them being closer to the "true" gradient one would get from whole-batch (processing the entire training set at every step) training.
+  Consequently, choosing a higher batch sizes can allow for stable training with higher learning rates.  
+  But if the system has memory restrictions one has no other alternative than choosing a smaller batches to be able to run the model at all. 
+  When doing so it is preferable to choose a smaller learning rate as well.
+  For my particular configuration, I tried some different batch sizes and used the highest possible number that did not throw an error.  
+  On my local computer, which I used to test and debug code, I did the training with a batch size of 10.
+  When training the neural net on the AWS cloud instance I did the training with a batch size of 100.
+  Note: I later learned that it is a widespread practice to set the batch size to a common sizes of memory (32, 64, 128, 256, etc..).
+ 
+Next I moved on to decide on how to define what learning rates I will consider, as it is one of the most important hyper-parameters to tune:
+
+- **Learning Rate**: It defines how quickly a network adjusts its parameters (weights) with respect to the calculated loss gradient.
+  The following formula shows the relationship:   
+  ```new_weight = existing_weight — learning_rate * gradient```    
+  High learning rates speed up the learning but if too high, the model may not converge, or the final accuracy can be low.
+  Low learning rates slow down the learning process but if too low, learning never progresses.
+  In between there is a band of “just right” learning rates that successfully train.  
+  
+  Running the same model exploring all of the possible learning rates is impractical. So I decided to test my models accuracy at 12 different learning rates ranging from 0.000001 to 10 at logarithmic intervals:
+  
+  0,000001 - 0,000004 - 0,000019 - 0,000081 - 0,000351 -  0,001520  
+  0,006579 - 0,028480 - 0,123285 - 0,533670 - 2,310130 - 10,000000  
+  
+  To run my tests I started from the lowest learning rate and increased it on each test iteration.
+  
+Then I had to determine the number of epochs to use:
+  
+- **Epoch**: An epoch is a single forward and backward pass of the entire training dataset.
+  Increasing the number of epochs can increase the accuracy of the model without requiring more data.
+  However this increase comes at the cost of higher training times (GPU time), which I had limited to 100 hours.
+  At first, during the test runs for finding the best model architecture, I decided to fix the number of epochs to an arbitrary value of 15 (to not consume excessive GPU time).
+  Later, during the test runs for finding the best learning rate I decided to let the machine run for 20 epochs.
+  Once the best learning rate is found one can increase the number of epochs for that particular learning rate to improve results further.
+  For instance, for the best performing learning rate found, one could set the number of epochs at a much higher value, such as 100.
+  When doing so it is important to monitor the validation accuracy to see after which epoch it stops improving (to avoid wasting GPU time).
+
+Finally these are the other training Hyperparameters that I decided not to optimize for these test runs:
+  
+- **Steps per epoch**: number of batches of training images that go through the network in 1 epoch.
+  The number of steps times the batch size indicates the number of samples taken from the pool of training data (whole dataset). In practical terms this reduces the size of the whole dataset, thus the data processed per epoch.
+  The provided default value was 200, which I did not change.
+  One can calculate a tailor-made value for steps_per_epoch based on the total number of images in training dataset divided by the batch_size.
+
+- **Validation steps**: number of batches of validation images that go through the network in 1 epoch.
+  This is similar to steps_per_epoch, except validation_steps is for the validation dataset.
+  I used the default value (50) for this as well.
+
 <a name="object-detection-with-custom-objects"/>  
 
 ### 5. Object Detection With Custom Objects  
