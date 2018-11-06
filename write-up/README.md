@@ -1,42 +1,39 @@
 [![Udacity - Robotics NanoDegree Program](https://s3-us-west-1.amazonaws.com/udacity-robotics/Extra+Images/RoboND_flag.png)](https://www.udacity.com/robotics)
 # RoboND Term 1 Deep Learning Project, Follow-Me
 
-**Writeup by Roberto Zegers**   
+**Write-up by Roberto Zegers**   
 In this project I programmed a deep neural network for a drone camera to identify and track a person in simulation. 
-I really enjoyed doing this project because it an eye-opener to me when I saw that I can actually implement my own artificial intelligence models.
+I really enjoyed doing this project because it was an eye-opener to me when I confirmed that I can build and deploy my own artificial intelligence models.
 Please write me an e-mail if you have any remarks or you want to share more information about the topic discussed.
 
 ![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/smrc-s6-rc-mimi-selfie.jpg)
 **Image 1: The quadcopter following a moving target**  
 (*Image Source: SMRC S6 RC Mini Kids Drone with Camera*)
 
+___
+
 ### Table of Contents
-**[Part 1: Implementing the Segmentation Network](#implementing-the-segmentation-network)**
-1. [Introduction](#introduction)
-2. [Development Process](#development-process)
-3. [Network Architecture](#network-architecture)
-4. [Hyperparameters](#Hyperparameters)
-5. [Object Detection With Custom Objects](#object-detection-with-custom-objects)
+**[Part 1: Implementing the Segmentation Network](#implementing-the-segmentation-network)**  
+1.1 [Introduction](#introduction)  
+1.2 [Development Process](#development-process)  
+1.3 [Network Architecture](#network-architecture)  
+1.4 [Hyperparameters related to training](#hyperparameters)  
 
-**[Part 2: Collecting Data](#collecting-data)**
-1. [Training Set](#training-set)
-2. [Validation Set](#validation-set)
-3. [Image Preprocessing](#image-preprocessing)
+**[Part 2: Training the Model](#training-the-model)**  
+2.1 [Local Computer Tests](#local-computer)  
+2.2 [Cloud Instance Setup](#cloud-instance)  
+2.3 [Training and Testing Results](#training-and-testing-results)  
+2.4 [Testing in Simulation](#testing-in-simulation)  
 
-**[Part 3: Training the Model](#training-the-model)**
-1. [Local Computer](#local-computer)
-2. [Cloud Instance](#cloud-instance)
+**[Part 3: Potential for Further Development](#potential-for-further-development)**  
+3.1 [Future Model/Training Improvements](#implementation-improvements)  
+3.2 [Object Detection With Custom Objects](#object-detection-with-custom-objects)  
 
-**[Part 4: Scoring and Testing the Model](#scoring-and-testing-the-model)**
-1. [Scoring](#scoring)
-2. [Testing in Simulation](#testing-in-simulation)
+**[Part 4: Setup Instructions](#setup-instructions)**    
+4.1 [Installation Guide](#installation-guide)  
+4.2 [Running the Project](#running-the-project)  
 
-**[Part 5: Future Improvements](#future-improvements)**
-1. [Implementation Improvements](#implementation-improvements)
-
-**[Part 6: Setup Instructions](#setup-instructions)**  
-1. [Installation Guide](#installation-guide)
-2. [Running the Project](#running-the-project)
+___
 
 <a name="implementing-the-segmentation-network"/>  
 
@@ -44,7 +41,7 @@ Please write me an e-mail if you have any remarks or you want to share more info
 
 <a name="introduction"/>  
 
-### 1. Introduction  
+### 1.1 Introduction  
 The goal of this project is to find a specific person in images or video taken by a quad-copter camera in a simulated environment.
 Deep learning is one methodology that has shown great success when used for the task of recognizing objects in images.
 In this project I will create a deep neural network for object detection by defining the network architecture and training the network from scratch.
@@ -55,7 +52,7 @@ Particularly I will develop a fully convolutional network (FCN) to perform seman
 
 <a name="development-process"/>  
 
-### 2. Development Process  
+### 1.2 Development Process  
 Next you will find a brief description of the development process and building blocks involved in designing the aforementioned neural network.
 As first step it was important to understand the basics of how simple neural networks work in order to not be confused with increasingly complex concepts later.
 All concepts and steps learned are later required for understanding FCN's.
@@ -342,7 +339,7 @@ The development of a Convolutional Neural Network allowed me to understand and a
 
 <a name="network-architecture"/>  
 
-### 3. Network Architecture  
+### 1.3 Network Architecture  
 
 Defining the architecture of a neural network equals to setting the Hyperparameters related to the network structure:
 
@@ -395,11 +392,11 @@ Each time I added a layer to test a model that is one layer deeper, I doubled th
 In order to be able to benchmark the different architectures I decided to fix the learning rate at an arbitrary value of 0.01.
 I also fixed the number of epochs to an arbitrary value of 15 (to spare the limited computational resources available (GPU time)).
 
-Please refer to the Performance Results section of this document for details on how well each of the tested FCN models produced predictions.
+Please refer to the Performance Results section of this document for details on how well each of the tested FCN models produced predictions.  
 
-<a name="Hyperparameters"/>  
+<a name="hyperparameters"/>  
 
-### 4. Hyperparameters related to training
+### 1.4 Hyperparameters related to training
 
 Hyperparameters related to the network structure were already described by me above under section "1.3 Network Architecture".
 In this section I will describe how I determined the hyperparameters related to training such as learning rate, batch size, etc..
@@ -456,72 +453,53 @@ Finally these are the other training Hyperparameters that I decided not to optim
   This is similar to steps_per_epoch, except validation_steps is for the validation dataset.
   I used the default value (50) for this as well.
 
-<a name="object-detection-with-custom-objects"/>  
-
-### 5. Object Detection With Custom Objects  
-
-<a name="collecting-data"/>  
-
-## Part 2: Collecting Data  
-
-<a name="training-set"/>  
-
-### 1. Training Set
-
-<a name="validation-set"/>  
-
-### 2. Validation Set
-
-<a name="image-preprocessing"/>  
-
-### 3. Image Preprocessing
-
 <a name="training-the-model"/>  
 
-## Part 3: Training the Model
+## Part 2: Training the Model
 
 <a name="local-computer"/>  
 
-### 1. Local Computer  
+### 2.1 Local Computer Tests
 
 <a name="cloud-instance"/>  
 
-### 2. Cloud Instance 
+### 2.2 Cloud Instance Setup
 
-<a name="scoring-and-testing-the-model"/>  
+<a name="training-and-testing-results"/>  
 
-## Part 4: Scoring and Testing the Model 
-
-<a name="scoring"/>  
-
-### 1.  Scoring
+### 2.3  Training and Testing Results
 
 <a name="testing-in-simulation"/>  
 
-### 2. Testing in Simulation
+### 2.4 Testing in Simulation
 
-<a name="future-improvements"/>  
+<a name="potential-for-further-development"/>  
 
-## Part 5: Future Improvements
+## Part 3: Potential for Further Development 
 
 <a name="implementation-improvements"/>  
 
-### 1. Implementation Improvements
+### 3.1 Future Model/Training Improvements
+
+<a name="object-detection-with-custom-objects"/>  
+
+### 3.2 Object Detection With Custom Objects  
 
 <a name="setup-instructions"/>  
 
-## Part 6: Setup Instructions
+## Part 4: Setup Instructions
 
 <a name="installation-guide"/>  
 
-### 1. Installation Guide
+### 4.1 Installation Guide
 
 <a name="running-the-project"/>  
 
-### 2. Running the Project
+### 4.2 Running the Project
 
+___
 
-References:
+**References:**
 - https://sebastianraschka.com/Articles/2014_about_feature_scaling.html
 - http://wiki.fast.ai/index.php/Over-fitting
 - https://www.tensorflow.org/tutorials/keras/overfit_and_underfit
