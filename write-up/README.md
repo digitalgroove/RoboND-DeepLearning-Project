@@ -490,6 +490,58 @@ Once I defined and tested the different neural network architectures I switched 
 
 ### 2.2 Cloud Instance Setup
 
+Tests on my local computer showed that deep learning requires a lot of computational power to run on. Since my system does not have a recent graphics card, I had to train my NN on a cloud service.
+For that I had to first setup a ec2 instance ( p2.xlarge (11.75 ECUs, 4 vCPUs, 2.7 GHz, E5-2686v4, 61 GiB memory, EBS only)).  
+It is important to verify that the instance is launched from the same AWS region where the service limit increase was requested.
+In my case it was Frankfurt.
+
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/AWS_Launch_Instance.png)
+
+Then I had to connect to my cloud instance from Windows using [PuTTY](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/putty.html) and the user name "ubuntu".
+
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/AWS_console_login_success.png)
+
+To keep the training processes running over ssh even if I got disconnected from the server I had to run: `$ tmux`.
+
+To copy my project to the server I used git clone:
+
+```
+$ git clone https://github.com/digitalgroove/RoboND-DeepLearning-Project.git
+$ cd RoboND-DeepLearning-Project/data
+```
+
+Then, to copy the dataset to my EC2 instance in Amazon Web Services, I used the wget command:
+```
+$ wget "https://s3-us-west-1.amazonaws.com/udacity-robotics/Deep+Learning+Data/Lab/train.zip"
+$ wget "https://s3-us-west-1.amazonaws.com/udacity-robotics/Deep+Learning+Data/Lab/validation.zip"
+$ wget "https://s3-us-west-1.amazonaws.com/udacity-robotics/Deep+Learning+Data/Project/sample_evaluation_data.zip"
+```
+
+Next I had to unzip the zip files from the Terminal and then rename a directory:
+```
+$ unzip train.zip
+$ mv train_combined train
+
+$ unzip validation.zip
+$ unzip sample_evaluation_data.zip
+
+$ cd ..
+```
+
+Finally run the Jupyter Notebook like this:  
+`jupyter notebook --ip='*' --port=8888 --no-browser`  
+
+Once Jupyter Notebook is running copy the URL that appears on the terminal window:  
+`http://localhost:8888/?token=76c9ae7aeab7db6bd93d2a`  
+and paste it in a new browser tab replacing localhost by the Public DNS (IPv4) of your instance (check your EC2 console):  
+`http://ec2-52-52-131-224.eu-central-1.compute.amazonaws.com:8888/?token=76c9ae7aeab7db6bd93d2a`  
+This will open the Notebook Dashboard of your server instance on your local PC browser.  
+To add or update a Jupyter Notebook file one can browse to the directory 'code' and upload the newest file using in the "upload" button.
+
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/AWS_upload_notebook_for_training.png)
+
+Then just open the Notebook and run the code cell by cell.
+
 <a name="training-and-testing-results"/>  
 
 ### 2.3  Training and Testing Results
