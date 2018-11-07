@@ -461,6 +461,31 @@ Finally these are the other training Hyperparameters that I decided not to optim
 
 ### 2.1 Local Computer Tests
 
+My Local Computer was the starting point to build and debug the neural network.
+Working on my local PC had the advantage of not consuming cloud GPU time resources.
+Specs: Intel Core i7-4500U CPU (2 CPU Cores, 1.80 GHz, 2.60 GHz Turbo), 8GB RAM, Windows 10.
+	
+To start the notebook server from the command line first run:
+
+`$ source activate RoboND`
+
+This will activate the conda environment which will provide access to the required libraries. Then run:
+
+`$ jupyter notebook`
+
+The Notebook Dashboard should open in a new browser tab.
+
+**Training example**  
+
+A 3 encoder/decoder model (learning rate 0.01, batch size 10, 2 epochs) took roughly 1 hour time.  
+Training results: loss = 0.0533, val_loss = 0.0714, final grade score = 0.003640328513150
+
+Predictions compared to the mask images:
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/model_3b_2e_local_patrol_without_target.png)  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/model_3b_2e_local_following_target.png)  
+
+Once I defined and tested the different neural network architectures I switched on to the AWS cloud instance to train them.
+
 <a name="cloud-instance"/>  
 
 ### 2.2 Cloud Instance Setup
