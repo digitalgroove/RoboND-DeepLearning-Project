@@ -462,7 +462,7 @@ Finally these are the other training Hyperparameters that I decided not to optim
 ### 2.1 Local Computer Tests
 
 My Local Computer was the starting point to build and debug the neural network.
-Working on my local PC had the advantage of not consuming cloud GPU time resources.
+Working on my local PC had the advantage of not consuming cloud GPU time resources.  
 Specs: Intel Core i7-4500U CPU (2 CPU Cores, 1.80 GHz, 2.60 GHz Turbo), 8GB RAM, Windows 10.
 	
 To start the notebook server from the command line first run:
@@ -542,9 +542,437 @@ To add or update a Jupyter Notebook file one can browse to the directory 'code' 
 
 Then just open the Notebook and run the code cell by cell.
 
+Note that when running on the cloud I increased the number of workers since the number of virtual CPUs for the instance is 4.
+I also increased batch_size from 10 to 100.
+
 <a name="training-and-testing-results"/>  
 
 ### 2.3  Training and Testing Results
+
+Because if the large number of hyper-parameters to tune, it is important to plan and run machine learning experiments systematically.
+For tuning my Hyperparameters I followed the next steps:
+
+- Rank the Hyperparameters from the most likely ones having a strong effect with respect to performance to the least likely ones 
+- Define the range of possible values to be used for each Hyperparameter during the tests
+- Specify a primary metric to optimize, in my case it was Intersection over Union (IoU)
+- Launch an experiment starting with the most likely Hyperparameters to have a strong effect with respect to performance
+- Visualize the training results
+- Select the best performing Hyperparameter and fix it
+- Move one with the next Hyperparameter to test in the ranking list
+- Iterate on this process until reaching a satisfactory level of performance
+
+#### **2.3.1 Set of experiments nr.1, Model Architecture**  
+
+My first approach was to experiment with the capacity of the network.
+To test some different architectures I started with the smallest possible FCN network and continued to add encoder/decoder blocks gradually.
+I continued until the accuracy improvement diminished and no longer justified an increase in computation time.
+
+In this first set of tests I decided to fix the learning rate at an arbitrary value of 0.01.
+Because of constraints on computational resources (GPU time) I also fixed the number of epochs to an arbitrary value of 15. 
+
+For all runs in this set, these were the training hyper-parameters:  
+learning_rate = 0.01  
+batch_size = 100  
+num_epochs = 15  
+steps_per_epoch = 200  
+validation_steps = 50  
+workers = 4  
+
+---
+
+**Architecture 1**
+
+Model:  
+```python
+def fcn_model(inputs, num_classes):
+      
+    # Encoder Blocks
+    enc_layer_1 = encoder_block(inputs, filters=32, strides=2)
+     
+    # 1x1 Convolution layer using conv2d_batchnorm()
+    layer_1x1 = conv2d_batchnorm(enc_layer_1, filters=64, kernel_size=1, strides=1)
+    
+    # Decoder Blocks
+    dec_layer_1 = decoder_block(layer_1x1, inputs, filters=32) # [upsampled_layer, large_input_layer]
+    
+    # The function returns the output layer of the model 
+    return layers.Conv2D(num_classes, 3, activation='softmax', padding='same')(dec_layer_1)
+```
+
+Training loss: 0.0406  
+val_loss: 0.0552  
+
+**Final grade score: 0.212578532287**
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/curves_model_1.png)
+	
+Predictions compared to the mask images:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/model_1_following_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/model_1_patrol_without_target.png)
+
+---
+	
+**Architecture 2**
+
+Model:  
+```python
+def fcn_model(inputs, num_classes):
+    
+    # Encoder Blocks
+    enc_layer_1 = encoder_block(inputs, filters=32, strides=2)
+    enc_layer_2 = encoder_block(enc_layer_1, filters=64, strides=2)
+      
+    # 1x1 Convolution layer using conv2d_batchnorm().
+    layer_1x1 = conv2d_batchnorm(enc_layer_2, filters=128, kernel_size=1, strides=1)
+    
+    # Decoder Blocks
+    dec_layer_1 = decoder_block(layer_1x1, enc_layer_1, filters=64)
+    dec_layer_2 = decoder_block(dec_layer_1, inputs, filters=32)
+        
+    # The function returns the output layer of the model
+    return layers.Conv2D(num_classes, 3, activation='softmax', padding='same')(dec_layer_2)
+```
+	
+	
+Training loss: 0.0245   
+val_loss: 0.0579  
+
+**Final grade score: 0.393810234581**
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/curves_model_2.png)
+
+Predictions compared to the mask images:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/model_2_following_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/model_2_patrol_without_target.png)
+
+---	
+	
+**Architecture 3**
+
+Model:  
+```python
+def fcn_model(inputs, num_classes):
+    
+    # Encoder Blocks
+    enc_layer_1 = encoder_block(inputs, filters=32, strides=2)
+    enc_layer_2 = encoder_block(enc_layer_1, filters=64, strides=2) 
+    enc_layer_3 = encoder_block(enc_layer_2, filters=128, strides=2)
+    
+    # 1x1 Convolution layer using conv2d_batchnorm()
+    layer_1x1 = conv2d_batchnorm(enc_layer_3, filters=256, kernel_size=1, strides=1)
+    
+    # Decoder Blocks
+    dec_layer_1 = decoder_block(layer_1x1, enc_layer_2, filters=128)  
+    dec_layer_2 = decoder_block(dec_layer_1, enc_layer_1, filters=64)  
+    dec_layer_3 = decoder_block(dec_layer_2, inputs, filters=32)
+      
+    # The function returns the output layer of the model
+    return layers.Conv2D(num_classes, 3, activation='softmax', padding='same')(dec_layer_3)
+```
+	
+Training loss: 0.0159  
+val_loss: 0.0300  
+
+**Final grade score: 	0.411231796592**
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/curves_model_3.png)
+
+Predictions compared to the mask images:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/model_3_following_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/model_3_patrol_without_target.png)
+
+---
+
+**Architecture 4**
+
+Model:  
+```python
+def fcn_model(inputs, num_classes):
+    
+    # Encoder Blocks
+    enc_layer_1 = encoder_block(inputs, filters=32, strides=2)
+    enc_layer_2 = encoder_block(enc_layer_1, filters=64, strides=2) 
+    enc_layer_3 = encoder_block(enc_layer_2, filters=128, strides=2)
+    enc_layer_4 = encoder_block(enc_layer_3, filters=256, strides=2) 
+    
+    # 1x1 Convolution layer using conv2d_batchnorm()
+    layer_1x1 = conv2d_batchnorm(enc_layer_4, filters=512, kernel_size=1, strides=1)
+    
+    # Decoder Blocks
+    dec_layer_1 = decoder_block(layer_1x1, enc_layer_3, filters=256) 
+    dec_layer_2 = decoder_block(dec_layer_1, enc_layer_2, filters=128) 
+    dec_layer_3 = decoder_block(dec_layer_2, enc_layer_1, filters=64)
+    dec_layer_4 = decoder_block(dec_layer_3, inputs, filters=32)
+    
+    # The function returns the output layer of the model
+    return layers.Conv2D(num_classes, 3, activation='softmax', padding='same')(dec_layer_4)
+```	
+
+Training loss: 0.0108  
+val_loss: 0.0315  
+
+**Final grade score: 0.396732931527**  
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/curves_model_4.png)
+
+Predictions compared to the mask images:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/model_4_following_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/model_4_patrol_without_target.png)
+
+On this last test I noticed that my training loss decreased further but my validation error started going up, showing signs of overfitting.
+Also final grade score worsened. 
+
+In summary on this first series of tests the model containing 3 encoder/decoder blocks performed best.  
+The best obtained accuracy was **41.1%**, which is just above the passing score.  
+To try to push the accuracy a bit further I decided to test different learning rates.
+___
+
+
+#### **2.3.2 Set of experiments nr.2, Learning Rate**  
+
+My second set of experiments aimed at finding the optimal learning rate given the architecture of 3 encoder/decoder blocks.
+As mentioned before, I decided to test 12 different learning rates ranging from 0.000001 to 10 at logarithmic intervals.
+For all runs in this set I kept all training hyper-parameters equal to my set of experiments Nr.1, except for the learning rate and number of epochs, which I increased to 20.
+Because of the higher number of epochs, I also had to run my previous 3 encoder/decoder test again but for 20 epochs (instead of 15).
+This increase led to slightly better results:  
+
+Training loss: 0.0149  
+val_loss: 0.0294  
+**Final grade score: 0.414307383469**  
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/curves_model_3_20e.png)
+
+Predictions compared to the mask images:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/model_3_20e_patrol_without_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/model_3_20e_following_target.png)
+
+In the next set of test I compare this result (score of 0.4143) with the 12 different learning rates:
+
+---
+
+**Results Test 1**
+
+Learning Rate: 0.000001  
+Training time: 1h 30m   
+Training loss: 1.1234  
+val_loss: 1.1453  
+The final grade score is: 0.0775799535243  
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/curves_test_1_lr.png)
+
+Predictions compared to the mask images:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_1_following_the_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_1_patrol_without_target.png)
+
+---
+
+**Results Test 2** 
+
+Learning Rate: 0.000004  
+Training time: 1h 32m  
+Training loss: 0.7170  
+val_loss: 0.7190  
+The final grade score is: 0.195546312075  
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/curves_test_2_lr.png)
+
+Predictions compared to the mask images:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_2_following_the_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_2_patrol_without_target.png)
+
+---
+
+**Results Test 3** 
+
+Learning Rate: 0.000019  
+Training time: 1h 32m  
+Training loss: 0.0775  
+val_loss: 0.0829  
+The final grade score is: 0.204758008619  
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/curves_test_3_lr.png)
+
+Predictions compared to the mask images:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_3_following_the_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_3_patrol_without_target.png)
+
+---
+
+**Results Test 4** 
+  
+Learning Rate: 0.000081  
+Training time: 1h 31m  
+Training loss: 0.0292  
+val_loss: 0.0379  
+The final grade score is: 0.29552469687  
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/curves_test_4_lr.png)
+
+Predictions compared to the mask images:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_4_following_the_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_4_patrol_without_target.png)
+
+---
+
+**Results Test 5** 
+
+Learning Rate: 0.000351  
+Training time: 1h 30m  
+loss: 0.0166  
+val_loss: 0.0305  
+The final grade score is: 0.376959649531  
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/curves_test_5_lr.png)
+
+Predictions compared to the mask images:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_5_following_the_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_5_patrol_without_target.png)
+
+---
+
+**Results Test 6** 
+  
+Learning Rate:  0.001520  
+Training time: 1h 30m  
+Training loss: 0.0122  
+val_loss: 0.0339  
+The final grade score is: 0.388669279511  
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/curves_test_6_lr.png)
+
+Predictions compared to the mask images:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_6_following_the_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_6_patrol_without_target.png)
+
+---
+
+**Results Test 7** 
+  
+Learning Rate:  0.006579  
+Training time: 1h 30m  
+Training loss: 0.0108  
+val_loss: 0.0330  
+The final grade score is: 0.403868097955  
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/curves_test_7_lr.png)
+
+Predictions compared to the mask images:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_7_following_the_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_7_patrol_without_target.png)
+
+---
+
+**Results Test 8** 
+
+Learning Rate:  0.028480  
+Training time: 1h 30m  
+Training loss: 0.0210  
+val_loss: 0.0345  
+
+The final grade score is: 0.355390980532  
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/curves_test_8_lr.png)
+
+Predictions compared to the mask images:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_8_following_the_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_8_patrol_without_target.png)
+
+---
+
+**Results Test 9**  
+
+Learning Rate:  0.123285   
+Training time: 1h 30s  
+Training loss: 0.2667  
+val_loss: 0.2673  
+The final grade score is: 0.319299211839  
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/curves_test_9_lr.png)
+
+Predictions compared to the mask images:
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_9_following_the_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_9_patrol_without_target.png)
+
+---
+
+**Results Test 10**  
+
+Learning Rate:   0.533670  
+Training time: 1h 30m  
+Training loss: 0.2968  
+val_loss: 0.3060  
+The final grade score is: 0.0  
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/curves_test_10_lr.png)
+
+Predictions compared to the mask images:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_10_following_the_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/LR_test_10_patrol_without_target.png)
+
+---
+
+I decided to stop the testing and do not run test at learning rates 2.310130 and 10.000000 since the performance stopped improving on the validation set.
+
+Given these results, I did not see any benefits when changing the learning rate, so I kept it to its original value of 0.01.
+
+---
+
+#### **2.3.3 Experiment nr.3, Data Augmentation**  
+
+One of important factor that affect the performance of a predictive model is the size of dataset.
+Generally speaking, the larger the train set is, the more information we can get from it. Thus, the more likely the learned model has strong generalization ability.
+However no one can really establish beforehand how much data is needed for a specific predictive modeling problem. One must discover it through empirical investigation.
+Instead of grabbing more novel new images it is possible to extend the current data using data augmentation. This is, slight variations to the original data, such as flips, translations or rotations can be added to the original dataset.
+A network would think these are distinct images so they can be used to improve our network performance.
+
+For this test I decided to flip all provided images, increasing my dataset from 4131 original images to a total of 8262 images.
+
+**Results using data augmentation and model 3**  
+
+Training parameters:  
+learning_rate = 0.01  
+batch_size = 100  
+num_epochs = 15  
+steps_per_epoch = 200  
+validation_steps = 50  
+workers = 4  
+
+Training loss: 0.0169  
+val_loss: 0.0289  
+**Final grade score: 0.430133401303**  
+
+Training curves:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/aug_data_curves_model_3.png)
+
+Predictions compared to the mask images:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/aug_data_model_3_15e_following_target.png)
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/aug_data_model_3_15e_patrol_without_target.png)
+
+As expected I obtained better results using data augmentation.  
+**This last test produced the overall best accuracy with a score of 43.0%.**  
+
+**Save model weights**  
+Running the cell with the line `#Save your trained model weights` saved the model file on the server.   
+Note: The ".h5" extension isn't applied (even though the data is itself in that format). The files are called model_weights and config_model_weights.
+I could have manually added the .h5 to the end of the filename but it is not required for submitting or running the code.  
+
+<a href="../data/weights/model_weights_3_15e_aug">Download model weights</a><br>
+<a href="../data/weights/config_model_weights_3_15e_aug">Download model configuration</a>
 
 <a name="testing-in-simulation"/>  
 
