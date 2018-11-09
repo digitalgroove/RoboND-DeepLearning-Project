@@ -978,6 +978,30 @@ I could have manually added the .h5 to the end of the filename but it is not req
 
 ### 2.4 Testing in Simulation
 
+To interface your neural net with the QuadSim simulator, you must download the QuadSim binary files.
+
+The simulator binary can be downloaded [here](https://github.com/udacity/RoboND-DeepLearning-Project/releases/latest)
+
+Next follow these steps on your local system to watch the quad use my model to search and follow the target:
+
+1. Copy the downloaded model to the project's weights directory `data/weights`.
+2. Launch the simulator, select "Spawn People", and then click the "Follow Me" button.
+3. Run the realtime follower script (from the "/code" folder where the follower.py file is)
+
+```
+$ python follower.py model_weights_3_15e_aug
+```
+
+When you are active in the simulator you can use the following keyboard controls:  
+**Scroll wheel:** Zooms the camera in and out  
+**Right mouse button (drag):** Rotates the camera around the quad  
+**ESC:** Exit to the main menu  
+**Crtl\-Q:** Quit  
+
+Image of quad following its target:  
+![](https://github.com/digitalgroove/RoboND-DeepLearning-Project/blob/master/write-up/images/quad_following_target.png)  
+
+
 <a name="potential-for-further-development"/>  
 
 ## Part 3: Potential for Further Development 
