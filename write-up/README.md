@@ -1022,6 +1022,34 @@ There are many other methods and techniques that I not had the time to try out t
 
 ### 3.2 Object Detection With Custom Objects  
 
+It is also possible to train a neural network model to detect custom objects if you want.
+For that it will be necessary to build a own custom dataset.
+The major steps are as follows:  
+
+**1. Collect data**  
+A new object detection model can only be developed by collecting a great amount of training data.  
+There are many different ways in which data can be collected. One can scrape the internet or use data captured others.
+Also, machine learning models can be trained on datasets of simulated images, just like the quadsim used for this project.
+In that case it will be necessary to code a image grabber, so that images from a simulation are saved automatically, otherwise it would become a task impossible to manage.  
+When collecting data it is very important that this data is similar to the data you expect your final model to work well on. Therefore one should aim to collect images captured by the same method of that images used later for predictions (e.g. mobile phone vs simulation).
+Also consider including images from different angles, lightning conditions and object size and distance.  
+To have a good performance, it is best to balance the dataset, that is each class should have a similar amount of samples.
+Take into consideration that a small dataset small contains about 900 images. You need 1,000 representative images for each class.
+
+**2. Label it**  
+In order to train a custom model, you need labeled data. One of the most important problems that are faced by a machine learning, is the time and effort required for collection and preparation of training data.
+To assign a label there are a few options, there are many off the shelf tools that can help. [See here](https://en.wikipedia.org/wiki/List_of_manual_image_annotation_tools).
+For semantic segmentation you have to label the data with a separated image, also called mask (in which every pixels has its own label).
+Labeling the entire training set is a hard and tedious work but the quality of your object detection greatly depends on this step.  
+Note: training multiple custom categories in the same image should be no problem, just make sure all objects are labeled correctly.
+
+**3. Pre-process it**  
+Besides of how to grab and label the data, it is necessary to sort it because all data must be organized in a specific file structure and directory hierarchy. 
+It might also be necessary to convert all images to the same file format. 
+Finally it might be necessary to format it into arrays, so that images represented as a matrix can be read as a valid input by the neural net.
+
+**Note: Because of the pretty tedious, repetitive and long task of grabbing, labeling and pre-processing data use scripts whenever possible to benefit from automatic processing.**
+
 <a name="setup-instructions"/>  
 
 ## Part 4: Setup Instructions
