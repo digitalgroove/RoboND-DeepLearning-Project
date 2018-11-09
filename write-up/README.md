@@ -969,10 +969,10 @@ As expected I obtained better results using data augmentation.
 **Save model weights**  
 Running the cell with the line `#Save your trained model weights` saved the model file on the server.   
 Note: The ".h5" extension isn't applied (even though the data is itself in that format). The files are called model_weights and config_model_weights.
-I could have manually added the .h5 to the end of the filename but it is not required for submitting or running the code.  
+I have manually added the .h5 to the end of the filename since it is part of the evaluation criteria (but it is not required for running the code).  
 
-<a href="../data/weights/model_weights_3_15e_aug">Download model weights</a><br>
-<a href="../data/weights/config_model_weights_3_15e_aug">Download model configuration</a>
+<a href="../data/weights/model_weights_3_15e_aug.h5">Download model weights</a><br>
+<a href="../data/weights/config_model_weights_3_15e_aug.h5">Download model configuration</a>
 
 <a name="testing-in-simulation"/>  
 
@@ -981,7 +981,7 @@ I could have manually added the .h5 to the end of the filename but it is not req
 To interface your neural net with the QuadSim simulator, you must download the QuadSim binary files.
 
 The simulator binary can be downloaded [here](https://github.com/udacity/RoboND-DeepLearning-Project/releases/latest)  
-Make sure you have downloaded the <a href="../data/weights/model_weights_3_15e_aug">model weights</a>.<br> 
+Make sure you have downloaded the <a href="../data/weights/model_weights_3_15e_aug.h5">model weights</a> and <a href="../data/weights/config_model_weights_3_15e_aug.h5">model configuration</a> .<br> 
 
 Next follow these steps on your local system to watch the quad use my model to search and follow the target:
 
@@ -990,7 +990,7 @@ Next follow these steps on your local system to watch the quad use my model to s
 3. Run the realtime follower script (from the "/code" folder where the follower.py file is)
 
 ```
-$ python follower.py model_weights_3_15e_aug
+$ python follower.py model_weights_3_15e_aug.h5
 ```
 
 When you are active in the simulator you can use the following keyboard controls:  
