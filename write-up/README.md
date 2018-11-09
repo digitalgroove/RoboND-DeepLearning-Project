@@ -980,7 +980,8 @@ I could have manually added the .h5 to the end of the filename but it is not req
 
 To interface your neural net with the QuadSim simulator, you must download the QuadSim binary files.
 
-The simulator binary can be downloaded [here](https://github.com/udacity/RoboND-DeepLearning-Project/releases/latest)
+The simulator binary can be downloaded [here](https://github.com/udacity/RoboND-DeepLearning-Project/releases/latest)  
+Make sure you have downloaded the <a href="../data/weights/model_weights_3_15e_aug">model weights</a>.<br> 
 
 Next follow these steps on your local system to watch the quad use my model to search and follow the target:
 
@@ -1058,10 +1059,24 @@ Finally it might be necessary to format it into arrays, so that images represent
 
 ### 4.1 Installation Guide
 
+#### Prerequisites
+
+The project requires the **RoboND** environment. You can follow the steps pointed out [here](https://github.com/udacity/RoboND-Python-StarterKit/blob/master/doc/configure_via_anaconda.md) to install all dependencies.
+
+#### Clone the repository
+
+```
+$ git clone https://github.com/digitalgroove/RoboND-DeepLearning-Project.git
+```
+
+#### Download the QuadSim binary
+The simulator binary can be downloaded [here](https://github.com/udacity/RoboND-DeepLearning-Project/releases/latest)
+
 <a name="running-the-project"/>  
 
 ### 4.2 Running the Project
 
+Follow steps describe above under section [2.4 Testing in Simulation](#testing-in-simulation) 
 ___
 
 **References:**
