@@ -1010,6 +1010,14 @@ Image of quad following its target:
 
 ### 3.1 Future Model/Training Improvements
 
+There are many other methods and techniques that I not had the time to try out that can serve to unlock the maximum potential of a model:   
+
+- In addition to augmenting data collecting more and better data (novel new images) can be key to improve performance.
+- Test different number of filters (kernel depth) and their impact on the model accuracy. Specially increasing the number of filters should have a high impact.  
+- Weight initialization strategies can be an important and often overlooked step in improving a model. One could test Xavier and He weight initialization methods.
+- Try out different optimizers: Adam, Adagrad, Adadelta, RMS Prop and Momentum.
+- Make use of Amazon's SageMaker Automatic Model Tuning tool for automatically fine-tuning Hyperparameters.
+
 <a name="object-detection-with-custom-objects"/>  
 
 ### 3.2 Object Detection With Custom Objects  
