@@ -1025,7 +1025,7 @@ There are many other methods and techniques that I not had the time to try out t
 
 I have showed that the model can recognize the Hero (target person) on a crowded environment and use that information to command the quadcopter to follow it.
 One limitation of this model, and generally speaking of any supervised learning algorithm, is that, the ability to recognize objects, depends on the example input-output pairs (labeled data) used during training.
-Therefore, due to the **dataset** used, the model will not work for another object such as a dog, cat, car, etc..
+Therefore, due to the **dataset** used, the current model will not work for another object such as a dog, cat, car, etc..
 However, it is completely possible to train the same neural network model, with a different set of training data, customized to detect other objects.
 For that it will be necessary to build a own custom dataset. The following are the major steps involved with the process:
 
