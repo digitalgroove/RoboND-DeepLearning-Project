@@ -1023,24 +1023,27 @@ There are many other methods and techniques that I not had the time to try out t
 
 ### 3.2 Object Detection With Custom Objects  
 
-It is also possible to train a neural network model to detect custom objects if you want.
-For that it will be necessary to build a own custom dataset.
-The major steps are as follows:  
+I have showed that the model can recognize the Hero (target person) on a crowded environment and use that information to command the quadcopter to follow it.
+One limitation of this model, and generally speaking of any supervised learning algorithm, is that, the ability to recognize objects, depends on the example input-output pairs (labeled data) used during training.
+Therefore, due to the **dataset** used, the model will not work for another object such as a dog, cat, car, etc..
+However, it is completely possible to train the same neural network model, with a different set of training data, customized to detect other objects.
+For that it will be necessary to build a own custom dataset. The following are the major steps involved with the process:
 
 **1. Collect data**  
 A new object detection model can only be developed by collecting a great amount of training data.  
-There are many different ways in which data can be collected. One can scrape the internet or use data captured others.
-Also, machine learning models can be trained on datasets of simulated images, just like the quadsim used for this project.
-In that case it will be necessary to code a image grabber, so that images from a simulation are saved automatically, otherwise it would become a task impossible to manage.  
-When collecting data it is very important that this data is similar to the data you expect your final model to work well on. Therefore one should aim to collect images captured by the same method of that images used later for predictions (e.g. mobile phone vs simulation).
+In this project the model was trained on a datasets of simulated images.
+Using existing utility tools, images from a simulation can be saved automatically. But if that was not the case, it is necessary to code a image grabber, otherwise it would become a task impossible to manage. 
+For other projects, there are many different ways in which data can be collected, for instance one can scrape the internet or use data captured by others.
+When collecting data it is very important that it is similar to the data you expect your final model to work well on. Therefore one should aim to collect images captured by the same method of that images used later for predictions (e.g. mobile phone vs simulation).
 Also consider including images from different angles, lightning conditions and object size and distance.  
 To have a good performance, it is best to balance the dataset, that is each class should have a similar amount of samples.
 Take into consideration that a small dataset small contains about 900 images. You need 1,000 representative images for each class.
 
 **2. Label it**  
 In order to train a custom model, you need labeled data. One of the most important problems that are faced by a machine learning, is the time and effort required for collection and preparation of training data.
-To assign a label there are a few options, there are many off the shelf tools that can help. [See here](https://en.wikipedia.org/wiki/List_of_manual_image_annotation_tools).
-For semantic segmentation you have to label the data with a separated image, also called mask (in which every pixels has its own label).
+For semantic segmentation the data is labeled using a separated image, also called mask (in which every pixels has its own label).
+When using computer generated scenes, you can program the software to let you assign each object a “index”, and then output an image where each object in the scene is masked by its index value.
+To assign a label on real images there are many off the shelf tools that can help, such as Labelbox which is a web based annotation tool to label images or text data[See here](https://en.wikipedia.org/wiki/List_of_manual_image_annotation_tools).
 Labeling the entire training set is a hard and tedious work but the quality of your object detection greatly depends on this step.  
 Note: training multiple custom categories in the same image should be no problem, just make sure all objects are labeled correctly.
 
